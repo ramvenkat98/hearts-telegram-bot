@@ -35,6 +35,7 @@ class HeartsMatch:
 
 	def end_match(self):
 		self.match_over = True
+		return ['match_over']
 
 class HeartsRound:
 	def __init__(self, match):
@@ -79,9 +80,7 @@ class HeartsRound:
 			player.to_pass.append(card)
 		self.not_passed.remove(player_no)
 		if len(self.not_passed) == 0:
-			self.pass_cards_and_start_play()
-			return "Passing over; play started"
-		return "Continue passing"
+			return self.pass_cards_and_start_play()
 
 	def make_move_playing(self, player_no, move):
 		player = self.match.players[player_no]
@@ -100,12 +99,16 @@ class HeartsRound:
 			if len(self.cards_on_table) == 0:
 				if suit == 'H' and not self.hearts_broken:
 					# assert only hearts left
+					assert(len(set(map(lambda x: x[1],
+						player.current_hand))) == 1)
 			else:
-				first_suit = self.cards_on_table[0]
+				first_suit = self.cards_on_table[0][1]
 				# assert same suit or no cards of that suit
+				assert(suit == first_suit or first_suit not in
+					set(map(lambda x: x[1], player.current_hand)))
 
 		except:
-			raise NameError('Enter valid card')
+			raise NameError('This card cannot be played')
 		# make move
 		# if hearts, hearts broken
 		if suit == 'H':
@@ -116,7 +119,8 @@ class HeartsRound:
 		self.current_player_no = (self.current_player_no + 1) % 4
 		# if all cards on table, calculate points and start next round
 		if len(self.cards_on_table) == 4:
-			self.end_round()
+			return self.end_round()
+		return []
 
 	def end_round(self):
 		cards_on_table = self.cards_on_table
@@ -138,29 +142,38 @@ class HeartsRound:
 		self.cards_on_table = []
 		# increase round no. by one
 		self.round_no += 1
+		# return result contains info about who got the hand
+		res = [player_no]
 		# if 13 rounds finished, then end game
 		if self.round_no > 13:
-			self.end_game()
+			return res + self.end_game()
+		return res
 
 	def end_game(self):
 		# add points
 		ended_match = False
+		res_current = []
+		res_total = []
 		for player in self.match.players:
 			if player.current_points != 26:
+				res_current.append(player.current_points)
 				player.overall_points += player.current_points
+				res_total.append(player.overall_points)
 				player.current_points = 0
 				if player.current_points > 50:
 					ended_match = True
 			else:
 				# shoot the moon
-				player.current_points -= 26
+				res_current.append(-26)
+				player.overall_points -= 26
+				res_total.append(player.overall_points)
+				player.current_points = 0
 		# change game state
 		self.game_state = 'game_over'
 		# end match if needed
 		if ended_match:
-			self.match.end_match()
-
-
+			return [(res_current, res_total),] + self.match.end_match()
+		return [(res_current, res_total),]
 
 	def pass_cards_and_start_play(self):
 		players = self.match.players
