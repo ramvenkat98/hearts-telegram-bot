@@ -40,7 +40,7 @@ class HeartsMatch:
 class HeartsRound:
 	def __init__(self, match):
 		self.match = match
-		deal_cards(self.match.players)
+		HeartsRound.deal_cards(self.match.players)
 
 		# passing related
 		self.not_passed = [0, 1, 2, 3]
@@ -90,15 +90,20 @@ class HeartsRound:
 		# check validity of move
 		move = move.upper()
 		try:
+			print("OK")
 			# check length of move, valid suit
-			assert(len(move) == 2 and move[0] in global_values and
-				move[1] in global_suits)
-			val, suit = move[0], move[1]
+			assert(len(move) in (2, 3) and move[:-1] in global_values and
+				move[-1] in global_suits)
+			print("Still ok")
+			val, suit = move[:-1], move[-1]
 			# assert that player has that card in his hand
-			assert(card in player.current_hand)
+			assert(move in player.current_hand)
+			print("Still still ok")
 			if len(self.cards_on_table) == 0:
+				print("Still still still ok")
 				if suit == 'H' and not self.hearts_broken:
 					# assert only hearts left
+					print("Wut")
 					assert(len(set(map(lambda x: x[1],
 						player.current_hand))) == 1)
 			else:
@@ -115,6 +120,8 @@ class HeartsRound:
 			self.hearts_broken = True
 		# update cards on table
 		self.cards_on_table .append(move)
+		# update cards in hand
+		player.current_hand.remove(move)
 		# update next player
 		self.current_player_no = (self.current_player_no + 1) % 4
 		# if all cards on table, calculate points and start next round
@@ -129,16 +136,16 @@ class HeartsRound:
 		highest_card_index = 0
 		highest_card_val = cards_on_table[0][0]
 		for (i, card) in enumerate(cards_on_table):
-			if (card[1] == orig_suit and
-				global_values.index(card[0]) >
+			if (card[-1] == orig_suit and
+				global_values.index(card[:-1]) >
 				global_values.index(highest_card_val)):
-				highest_card_index, highest_card_val = i, card[0]
+				highest_card_index, highest_card_val = i, card[:-1]
 		# sum points, give it to owner
 		total_points = sum(list(map(get_points, cards_on_table)))
 		player_no = (self.first_player_no + highest_card_index) % 4
 		self.match.players[player_no].current_points += total_points
 		# update first, current player, cards on table
-		self.first_player, self.current_player = player_no, player_no
+		self.first_player_no, self.current_player_no = player_no, player_no
 		self.cards_on_table = []
 		# increase round no. by one
 		self.round_no += 1
@@ -181,10 +188,11 @@ class HeartsRound:
 		for (player_no, player) in enumerate(players):
 			pass_to = players[self.passing_order[player_no]]
 			pass_to.current_hand += player.to_pass
+			pass_to.current_hand.sort(key = card_key)
 			player.to_pass = []
 		# start play
 		self.round_no = 1
-		self.first_player_no = find_2_clubs(players)
+		self.first_player_no = HeartsRound.find_2_clubs(players)
 		self.current_player_no = (self.first_player_no + 1) % 4
 		players[self.first_player_no].current_hand.remove('2C')
 		self.cards_on_table = ['2C',]
@@ -200,7 +208,10 @@ class HeartsRound:
 		random.shuffle(hands)
 		for (i, player) in enumerate(players):
 			player.current_hand = hands[13*i:13*(i+1)]
+			player.current_hand.sort(key = card_key)
 
+def card_key(c):
+	return 13 * global_suits.index(c[-1]) + global_values.index(c[:-1])
 
 class HeartsPlayer:
 	def __init__(self):
@@ -208,3 +219,6 @@ class HeartsPlayer:
 		self.current_hand = []
 		self.to_pass = []
 		self.current_points = 0
+
+print("Imported hearts interface")
+
