@@ -18,7 +18,7 @@ def get_points(card):
 		return 13
 	#if card == "JD":
 	#	return -10
-	if card[1] == "H":
+	if card[-1] == "H":
 		return 1
 	return 0
 

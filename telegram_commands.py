@@ -250,6 +250,8 @@ class GroupChat:
 			self.private_chats)
 		return self.start_game(bot)
 	def start_game(self, bot):
+		# deal cards
+		HeartsRound.deal_cards(self.match.players)
 		# announce cards privately to each player
 		for (i, private_chat) in enumerate(self.private_chats):
 			send_private_message(bot, craft_cards_list(

@@ -31,3 +31,7 @@ def setActiveGroup(user_id, active_grop_chat_id):
 	else:
 		print("GG")
 		return 1/0
+
+
+
+
